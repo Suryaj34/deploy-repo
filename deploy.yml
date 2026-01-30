@@ -1,0 +1,62 @@
+---
+- name: Configure web server (Apache) and deploy site
+  hosts: web
+  become: yes
+  vars:
+    web_root: /var/www/html
+    src_index: "{{ web_src | default('../web/index.html') }}"
+ 
+  tasks:
+    # Debian/Ubuntu branch
+    - name: Update apt cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+ 
+    - name: Install Apache (Debian/Ubuntu)
+      apt:
+        name: apache2
+        state: present
+      when: ansible_os_family == "Debian"
+ 
+    - name: Ensure Apache is enabled and running (Debian/Ubuntu)
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+      when: ansible_os_family == "Debian"
+ 
+    # RedHat/Amazon branch
+    - name: Install Apache (RHEL/Amazon)
+      yum:
+        name: httpd
+        state: present
+      when: ansible_os_family == "RedHat"
+ 
+    - name: Ensure Apache is enabled and running (RHEL/Amazon)
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat"
+ 
+    # Common tasks
+    - name: Create web root directory
+      file:
+        path: "{{ web_root }}"
+        state: directory
+        mode: '0755'
+ 
+    - name: Deploy index.html
+      copy:
+        src: "{{ src_index }}"
+        dest: "{{ web_root }}/index.html"
+        mode: '0644'
+ 
+    # If SELinux is enforcing on RHEL/Amazon
+    - name: Set SELinux context on web root (if enabled)
+      command: restorecon -Rv "{{ web_root }}"
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_selinux is defined
+        - ansible_selinux.status == "enabled"
