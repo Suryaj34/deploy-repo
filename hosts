@@ -1,3 +1,4 @@
-[web]
-3.110.106.3 ansible_user=ubuntu
-13.232.50.13 ansible_user=ubuntu
+resource "local_file" "ansible_inventory" {
+  content = "[webservers]\n" + join("\n", [for ip in aws_instance.web[*].private_ip : "${ip} ansible_user=ubuntu"])
+  filename = "./Suryaj34/deploy-repo/blob/main/hosts"
+}
