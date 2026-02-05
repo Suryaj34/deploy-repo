@@ -1,4 +1,0 @@
-resource "local_file" "ansible_inventory" {
-  content = "[webservers]\n" + join("\n", [for ip in aws_instance.web[*].private_ip : "${ip} ansible_user=ubuntu"])
-  filename = "./Suryaj34/deploy-repo/blob/main/hosts"
-}
